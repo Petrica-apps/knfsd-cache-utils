@@ -157,11 +157,28 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   tree -d $LOCAL_EXPORT >/dev/null
   echo "Finished discovering NFS crossmounts for $REMOTE_IP:$REMOTE_EXPORT..."
 
-  # Create an individual export for each crossmount
-  echo "Creating NFS share exports for $REMOTE_IP:$REMOTE_EXPORT..."
-  for mountpoint in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT | awk '{print $6}'); do
-    echo "$mountpoint   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash,crossmnt)" >>/etc/exports
+ 
+
+  # Create an individual mount and export for each crossmount
+  echo "Creating NFS share mounts and exports for $REMOTE_IP:$REMOTE_EXPORT..."
+  ITER=0
+  for dflist in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT ); do
+
+    # Get Mountpoints
+    DISCO_LOCAL_MOUNTPOINT=$(echo $dflist | awk '{print $6}')
+    DISCO_REMOTE_MOUNTPOINT=$(echo $dflist | awk '{print $1}' | cut -f2 -d$':')
+
+    # Explicitly mount the crossmount - skip the first one because we've mounted this already
+    if [ "$ITER" -ne "0" ]; then
+      mount -t nfs -o vers=3,ac,actimeo=600,noatime,nocto,nconnect=$NCONNECT_VALUE,sync$FSC $REMOTE_IP:$DISCO_REMOTE_MOUNTPOINT $DISCO_LOCAL_MOUNTPOINT
+    fi
+    ITER=$(expr $ITER + 1)
+
+
+    # Add the export
+    echo "$LOCAL_MOUNTPOINT   $EXPORT_CIDR(rw,wdelay,no_root_squash,no_subtree_check,fsid=$FSID,sec=sys,rw,secure,no_root_squash,no_all_squash,crossmnt)" >>/etc/exports
     FSID=$((FSID + 10))
+
   done
 
 
