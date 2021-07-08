@@ -21,7 +21,6 @@ set -e
 # Retrieves an attribute from VM Metadata Server
 # @param (str) attribute name
 function get_attribute() {
-  sleep 1
   curl -sS "http://metadata.google.internal/computeMetadata/v1/instance/attributes/$1" -H "Metadata-Flavor: Google"
 }
 
@@ -162,7 +161,8 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
   # Create an individual mount and export for each crossmount
   echo "Creating NFS share mounts and exports for $REMOTE_IP:$REMOTE_EXPORT..."
   ITER=0
-  for dflist in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT ); do
+  IFS=$'\n' # Ensure only newlines are iterated through
+  for dflist in $(df -h | grep $REMOTE_IP:$REMOTE_EXPORT); do
 
     # Get Mountpoints
     DISCO_LOCAL_MOUNTPOINT=$(echo $dflist | awk '{print $6}')
@@ -180,7 +180,7 @@ for i in $(echo $DISCO_MOUNT_EXPORT_MAP | sed "s/,/ /g"); do
     FSID=$((FSID + 10))
 
   done
-
+  unset IFS # Reset IFS behaviour
 
   # Increment FSID
   FSID=$((FSID + 10))
