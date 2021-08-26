@@ -82,11 +82,6 @@ else
   FSC=
 fi
 
-# Disable NFS Mountpoint Timeout
-echo "Disabling NFS Mountpoint Timeout..."
-echo "-1" > /proc/sys/fs/nfs/nfs_mountpoint_timeout 
-echo "Finished Disabling NFS Mountpoint Timeout..."
-
 # Set the FSID
 FSID=10
 
@@ -216,5 +211,11 @@ echo "Starting nfs-kernel-server..."
 systemctl start portmap
 systemctl start nfs-kernel-server
 echo "Finished starting nfs-kernel-server..."
+
+# Disable NFS Mountpoint Timeout
+echo "Disabling NFS Mountpoint Timeout..."
+echo "-1" > /proc/sys/fs/nfs/nfs_mountpoint_timeout 
+echo "Finished Disabling NFS Mountpoint Timeout..."
+
 
 echo "Reached Proxy Startup Exit. Happy caching!"
